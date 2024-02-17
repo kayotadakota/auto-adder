@@ -3,8 +3,10 @@ from deep_translator import GoogleTranslator
 
 
 def translate(text: str) -> tuple:
-    en = GoogleTranslator(source='korean', target='english').translate(text)
-    ru = GoogleTranslator(source='korean', target='russian').translate(text)
+    translator = GoogleTranslator(source='korean', target='english')
+    en = translator.translate(text)
+    translator.target = 'ru'
+    ru = translator.translate(text)
     return (en, ru)
 
 
