@@ -121,23 +121,19 @@ class KakaoWebtoon(Base):
             except Exception as ex:
                 self.logger.error(f'Unexpected error: {ex}')
 
+    
+    def _fetch_cover(self, title: str, cover_url: str):
 
-    def download_cover(self, id: str, title: str, url: str):
         try:
-            response = self.session.get(
-                url,
-                headers=DOWNLOAD_COVER_HEADERS
-            )
+            response = self.session.get(cover_url, headers=DOWNLOAD_COVER_HEADERS)
 
             if response.status_code == 200:
-                self.logger.info(f'Downloading the image for {title}...')
-
-                with open(f'C:\\Users\\Kayota\\Desktop\\new_titles\\images\\{id}.jpg', 'wb') as file:
-                    file.write(response.content)
-
-                self.logger.info('The image has been successfully downloaded.')
+                self.logger.info(f'Fetching the cover for {title}...')
+                img_binary = response.content
+                self.logger.info(f'The cover is fetched.')
+                return image_to_base64(img_binary)
             else:
-                self.logger.error(f'Bad status code: {response.status_code}')
+                raise Exception('Could not fetch the cover.')
         except Exception as ex:
             self.logger.error(f'Unexpected error: {ex}')
 
@@ -177,9 +173,8 @@ class KakaoWebtoon(Base):
                     self.output['main_name'] = ru.capitalize()
 
                     cover_url = 'https:' + content.get('thumbnail')
-                    self.download_cover(id, self.output['another_name'], cover_url)
-                    img_base64 = image_to_base64(f'C:\\Users\\Kayota\\Desktop\\new_titles\\images\\{id}.jpg')
-                    self.output['cover'] = 'data:image/jpeg;base64,' + img_base64
+                    cover = self._fetch_cover(self.output['another_name'], cover_url)
+                    self.output['cover'] = 'data:image/jpeg;base64,' + cover
 
                     self.output_list.append(self.output)
                     self.logger.info('Info file is ready.')
@@ -204,3 +199,4 @@ class KakaoWebtoon(Base):
             self.get_new()
             self.search_on_kakao_page()
             self.get_titles_info()
+

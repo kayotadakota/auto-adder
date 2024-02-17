@@ -31,20 +31,18 @@ class Naver(Base):
             self.logger.error(f'Unexpected error: {ex}')
 
 
-    def _download_image(self, id, title, cover_url):
-
+    def _fetch_cover(self, title, cover_url):
+        
         try:
             response = self.session.get(cover_url, headers=NAVER_DOWNLOAD_IMAGE_HEADERS)
 
             if response.status_code != 403:
-                self.logger.info(f'Downloading the image for {title}...')
-
-                with open(f'C:\\Users\\Kayota\\Desktop\\new_titles\\images\\{id}.jpg', 'wb') as file:
-                    file.write(response.content)
-
-                self.logger.info('The image has been successfully downloaded.')
+                self.logger.info(f'Fetching the cover for {title}...')
+                img_binary = response.content
+                self.logger.info(f'The cover is fetched.')
+                return image_to_base64(img_binary)
             else:
-                raise Exception('Could not get the image.')
+                raise Exception('Could not get the cover.')
         except Exception as ex:
             self.logger.error(f'Unexpected error: {ex}')
 
@@ -76,9 +74,8 @@ class Naver(Base):
             self.output['original_link'] = f'https://comic.naver.com/webtoon/list?titleId={id}'
 
             cover_url = title.get('thumbnailUrl')
-            self._download_image(id, self.output['another_name'], cover_url)
-            img_base64 = image_to_base64(f'C:\\Users\\Kayota\\Desktop\\new_titles\\images\\{id}.jpg')
-            self.output['cover'] = 'data:image/jpeg;base64,' + img_base64
+            cover = self._fetch_cover(self.output['another_name'], cover_url)
+            self.output['cover'] = 'data:image/jpeg;base64,' + cover
 
             self.logger.info('Info file is ready.')
             self.output_list.append(self.output)
