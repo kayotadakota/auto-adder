@@ -36,13 +36,13 @@ class Base():
             'user_message': '',
         }
         self.output_list = []
-        self.logger = logging.getLogger(name)
 
         if asynchronous:
             self.session = aiohttp.ClientSession()
         else:
             self.session = Session()
 
+        self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.INFO)
         stream_handler = logging.StreamHandler()
         stream_handler.setLevel(logging.INFO)
