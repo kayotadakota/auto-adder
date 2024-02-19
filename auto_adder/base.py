@@ -1,3 +1,4 @@
+import aiohttp
 import logging
 from requests import Session
 from datetime import date
@@ -5,7 +6,7 @@ from datetime import date
 
 class Base():
 
-    def __init__(self, name):
+    def __init__(self, name, asynchronous=False):
         '''
         --- Set age_limit to 1 for adult titles
         --- Another name is the title original name (in Korean, Japanese etc.)
@@ -35,8 +36,12 @@ class Base():
             'user_message': '',
         }
         self.output_list = []
-        self.session = Session()
         self.logger = logging.getLogger(name)
+
+        if asynchronous:
+            self.session = aiohttp.ClientSession()
+        else:
+            self.session = Session()
 
         self.logger.setLevel(logging.INFO)
         stream_handler = logging.StreamHandler()
