@@ -1,5 +1,3 @@
-import json
-
 from datetime import date, timedelta
 from urllib.parse import quote
 
