@@ -6,7 +6,7 @@ from datetime import date
 
 class Base():
 
-    def __init__(self, name, asynchronous=False):
+    def __init__(self, name, asynchronous=False, timeout=5, proxy=None, retry=1):
         '''
         --- Set age_limit to 1 for adult titles
         --- Another name is the title original name (in Korean, Japanese etc.)
@@ -36,9 +36,12 @@ class Base():
             'user_message': '',
         }
         self.output_list = []
+        self.proxy = proxy
+        self.retry = retry
 
         if asynchronous:
-            self.session = aiohttp.ClientSession()
+            self.timeout = aiohttp.ClientTimeout(total=timeout)
+            self.session = aiohttp.ClientSession(timeout=self.timeout)
         else:
             self.session = Session()
 
