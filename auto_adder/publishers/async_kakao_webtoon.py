@@ -10,7 +10,7 @@ from auto_adder.constants import (
     GET_UPDATE_KAKAO_WEBTOON_URL,
     GET_UPDATE_KAKAO_WEBTOON_HEADERS,
     SEARCH_ON_KAKAO_PAGE_URL,
-    SEARCH_ONA_KAKAO_PAGE_HEADERS,
+    SEARCH_ON_KAKAO_PAGE_HEADERS,
     SEARCH_ON_KAKAO_PAGE_PAYLOAD,
     GET_TITLE_INFO_URL,
     GET_TITLE_INFO_HEADERS,
@@ -114,14 +114,14 @@ class AsyncKakaoWebtoon(Base):
     async def _search_on_kakao_page(self, title: str):
 
         encoded_title = quote(title)
-        SEARCH_ONA_KAKAO_PAGE_HEADERS['Referer'] = f"https://page.kakao.com/search/result?keyword={encoded_title}&categoryUid=10"
+        SEARCH_ON_KAKAO_PAGE_HEADERS['Referer'] = f"https://page.kakao.com/search/result?keyword={encoded_title}&categoryUid=10"
         SEARCH_ON_KAKAO_PAGE_PAYLOAD['variables']['input']['keyword'] = title
         proxy = choice(self.proxies) 
         
         try:
             async with self.session.post(
                 SEARCH_ON_KAKAO_PAGE_URL,
-                headers=SEARCH_ONA_KAKAO_PAGE_HEADERS,
+                headers=SEARCH_ON_KAKAO_PAGE_HEADERS,
                 json=SEARCH_ON_KAKAO_PAGE_PAYLOAD,
                 proxy=proxy
             ) as response:

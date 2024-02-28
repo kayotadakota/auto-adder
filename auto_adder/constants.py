@@ -16,7 +16,7 @@ GET_UPDATE_KAKAO_WEBTOON_HEADERS = {
 }
 
 SEARCH_ON_KAKAO_PAGE_URL = 'https://page.kakao.com/graphql'
-SEARCH_ONA_KAKAO_PAGE_HEADERS = {
+SEARCH_ON_KAKAO_PAGE_HEADERS = {
     "Accept": "*/*",
     "Accept-Language": "en-US,en;q=0.9,ja;q=0.8",
     "Content-Type": "application/json; charset=utf-8",
