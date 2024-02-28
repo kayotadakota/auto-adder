@@ -198,3 +198,5 @@ class KakaoWebtoon(Base):
             self.search_on_kakao_page()
             self.get_titles_info()
 
+
+

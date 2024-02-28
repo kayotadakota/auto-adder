@@ -1,12 +1,21 @@
-import aiohttp
+import os
+import sys
 import logging
-from requests import Session
+
 from datetime import date
+
+from auto_adder.constants import (
+    REMANGA_LOGIN_URL,
+    REMANGA_LOGIN_HEADERS,
+    REMANGA_LOGIN_PAYLOAD,
+    REMANGA_ADD_NEW_TITLE_URL,
+    REMANGA_ADD_NEW_TITLE_HEADERS,
+)
 
 
 class Base():
 
-    def __init__(self, name, asynchronous=False, timeout=5, proxy=None, retry=1):
+    def __init__(self, name, session, proxy=None, retry=1):
         '''
         --- Set age_limit to 1 for adult titles
         --- Another name is the title original name (in Korean, Japanese etc.)
@@ -35,15 +44,12 @@ class Base():
             'type': 1,
             'user_message': '',
         }
-        self.output_list = []
-        self.proxy = proxy
-        self.retry = retry
 
-        if asynchronous:
-            self.timeout = aiohttp.ClientTimeout(total=timeout)
-            self.session = aiohttp.ClientSession(timeout=self.timeout)
-        else:
-            self.session = Session()
+        self.output_list = []
+        self.access_token = None
+        self.proxies: list[str] = proxy
+        self.retry = retry
+        self.session = session
 
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.INFO)
@@ -52,3 +58,88 @@ class Base():
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         stream_handler.setFormatter(formatter)
         self.logger.addHandler(stream_handler)
+
+
+    async def _send_preflight_request(self, url, headers):
+
+        self.logger.info('Sending preflight request...')
+
+        try:
+            async with self.session.options(url, headers=headers) as response:
+
+                if response.status == 200:
+                    self.logger.info('Response status code is 200.')
+                    return True
+                else:
+                    self.logger.warning(f'Bad status code: {response.status}')
+                    return False
+        except Exception as ex:
+            self.logger.error(f'Unexpected error: {ex}')
+
+
+    async def _login(self) -> dict:
+
+        REMANGA_LOGIN_PAYLOAD['password'] = os.environ.get('REMANGA_PASS')
+        REMANGA_LOGIN_PAYLOAD['user'] = os.environ.get('REMANGA_USER')
+    
+        try:
+
+            async with self.session.post(
+                REMANGA_LOGIN_URL,
+                headers=REMANGA_LOGIN_HEADERS,
+                json=REMANGA_LOGIN_PAYLOAD,
+                timeout=3
+            ) as response:
+
+                if response.status == 200:
+                    data = await response.json()
+
+                    try:
+                        token = data.get('content').get('access_token')
+                        self.access_token = token
+
+                    except TypeError as ex:
+                        self.logger.error(f'Missing value: {ex}')
+
+                    if self.access_token:
+                        self.logger.info('User info successfully received.')
+                    else:
+                        self.logger.warning('User info is not received.')
+                else:
+                    self.logger.warning(f'Bad status code: {response.status}')
+        except Exception as ex:
+            self.logger.error(f'Unexpected error: {ex}')
+
+
+    async def _add_new_title(self, title_info):
+        '''If the content-length is specified and exceeded the actual length than
+        the data would be cut down to the specified size.'''
+
+        name = title_info.get('another_name')
+
+        if not title_info:
+            raise Exception('Title info is missing.')
+        
+        REMANGA_ADD_NEW_TITLE_HEADERS['Authorization'] = 'bearer ' + self.access_token
+
+        try:
+            self.logger.info('Sending data to the server...')
+
+            async with self.session.post(
+                REMANGA_ADD_NEW_TITLE_URL,
+                headers=REMANGA_ADD_NEW_TITLE_HEADERS,
+                json=title_info
+            ) as response:
+
+                if response.status == 204:
+                    self.logger.info(f'The title {name} was successfully added.')
+                    
+                elif response.status == 400:
+                    data = await response.json()
+                    msg = data.get('msg')
+                    self.logger.warning(f'{msg}')
+
+                else:
+                    self.logger.warning(f'Bad status code: {response.status}')
+        except Exception as ex:
+            self.logger.error(f'Unexpected error: {ex}')
